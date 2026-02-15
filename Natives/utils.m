@@ -23,9 +23,9 @@ BOOL getEntitlementValue(NSString *key) {
 }
 
 BOOL isJITEnabled(BOOL checkCSFlags) {
-    if (!checkCSFlags && (getEntitlementValue(@"dynamic-codesigning") || isJailbroken)) {
-        return YES;
-    }
+    NSLog(@"[DisableJIT] JIT check bypassed - returning YES regardless of system state");
+    return YES;
+}
 
     int flags;
     csops(getpid(), 0, &flags, sizeof(flags));

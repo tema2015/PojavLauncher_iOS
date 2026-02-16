@@ -1,0 +1,20 @@
+name: iPhone IPA No-JIT
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build IPA
+      run: |
+        xcodebuild -project PojavLauncher.xcodeproj \
+        -scheme PojavLauncher -sdk iphoneos \
+        -configuration Release CODE_SIGNING_ALLOWED=NO \
+        -derivedDataPath build clean build
+        mkdir -p Payload
+        cp -r build/Build/Products/Release-iphoneos/PojavLauncher.app Payload/
+        zip -r PojavLauncher-NoJIT.ipa Payload/
+    - uses: actions/upload-artifact@v4
+      with:
+        name: pojav-ipa
+        path: PojavLauncher-NoJIT.ipa

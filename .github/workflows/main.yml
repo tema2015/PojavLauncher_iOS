@@ -1,0 +1,43 @@
+name: PojavLauncher iPhone IPA ✓
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install gmake (КРИТИЧНО)
+      run: |
+        brew install make
+        echo "/opt/homebrew/bin" >> $GITHUB_PATH
+        
+    - name: Build iPhone NO JIT
+      run: |
+        # ✅ ПУТЬ ПРАВИЛЬНЫЙ - проект в корне
+        pwd
+        ls -la PojavLauncher.xcodeproj
+        
+        # Сборка БЕЗ cd (в корне!)
+        xcodebuild -project PojavLauncher.xcodeproj \
+        -scheme PojavLauncher -sdk iphoneos \
+        -configuration Release \
+        CODE_SIGNING_ALLOWED=NO \
+        ARCHS=arm64 \
+        VALID_ARCHS=arm64 \
+        clean build
+        
+        # Найти app
+        find . -name "PojavLauncher.app" -type d
+        
+        # IPA
+        mkdir -p Payload
+        find . -name "PojavLauncher.app" -type d | head -1 | \
+        xargs -I {} cp -r {} Payload/
+        zip -r PojavLauncher-NoJIT.ipa Payload/
+        
+    - uses: actions/upload-artifact@v4
+      with:
+        name: pojavlauncher-ipa
+        path: |
+          PojavLauncher-NoJIT.ipa
+          Payload/

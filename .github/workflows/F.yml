@@ -1,0 +1,35 @@
+name: FAST iPhone IPA
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: macos-13   # Стабильный, без MacStadium очередей
+    timeout-minutes: 45
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: DEBUG project structure
+      run: |
+        find . -name "*.xc*" | head -20 || true
+        ls -la *.xcodeproj || true
+        
+    - name: Build WITHOUT workspace
+      run: |
+        xcodebuild -project PojavLauncher.xcodeproj \
+        -scheme PojavLauncher -sdk iphoneos \
+        -configuration Release \
+        CODE_SIGNING_ALLOWED=NO \
+        CODE_SIGN_IDENTITY="" \
+        clean build || true
+        
+        # Если .app создался
+        find . -name "*.app" -type d | head -1 | xargs -I {} cp -r {} Payload/
+        zip -r PojavLauncher-NoJIT.ipa Payload/ || true
+        
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: everything
+        path: |
+          *.ipa
+          Payload/
+          *.log

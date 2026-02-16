@@ -1,0 +1,46 @@
+name: FINAL iPhone IPA
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: macos-15  # ✅ ТОЧНО работает 2026
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: 'latest-stable'
+        
+    - name: Build PojavLauncher
+      run: |
+        # Показать структуру проекта
+        find . -name "*.xcode*" -o -name "*.xcworkspace*" | head -10
+        
+        # Попробовать workspace (CocoaPods)
+        if [ -f "PojavLauncher.xcworkspace" ]; then
+          echo "Using workspace"
+          xcodebuild -workspace PojavLauncher.xcworkspace \
+          -scheme PojavLauncher -sdk iphoneos -configuration Release \
+          CODE_SIGNING_ALLOWED=NO clean build
+        else
+          echo "Using project"
+          xcodebuild -project PojavLauncher.xcodeproj \
+          -scheme PojavLauncher -sdk iphoneos -configuration Release \
+          CODE_SIGNING_ALLOWED=NO clean build
+        fi
+        
+        # Найти и упаковать .app
+        mkdir -p Payload
+        find . -name "PojavLauncher.app" -type d | head -1 | \
+        xargs -I {} cp -r {} Payload/ || echo "App not found"
+        
+        zip -r PojavLauncher-NoJIT.ipa Payload/ || echo "IPA failed"
+        
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: all-files
+        path: |
+          *.ipa
+          Payload/
+          build/

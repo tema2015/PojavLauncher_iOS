@@ -1,0 +1,31 @@
+name: PojavLauncher iPhone IPA
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup CocoaPods
+      run: |
+        gem install cocoapods
+        cd PojavLauncher  # или путь к xcworkspace
+        pod install
+        
+    - name: Build IPA
+      run: |
+        cd PojavLauncher
+        xcodebuild -workspace PojavLauncher.xcworkspace \
+        -scheme PojavLauncher -sdk iphoneos \
+        -configuration Release \
+        CODE_SIGNING_ALLOWED=NO \
+        -derivedDataPath build clean archive
+        
+        mkdir Payload
+        cp -r build/Build/Products/Release-iphoneos/*.app Payload/
+        zip -r ../PojavLauncher-NoJIT.ipa Payload/
+        
+    - uses: actions/upload-artifact@v4
+      with:
+        name: pojav-nojit-ipa
+        path: PojavLauncher-NoJIT.ipa
